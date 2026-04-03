@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#b7332f" />
+  <meta name="description" content="洛阳5日旅游行程H5，查看每日景点到洛阳华美达酒店的距离与地图。" />
+  <title>洛阳5日行程地图 H5</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --bg: #f7f4f1;
+      --card: rgba(255,255,255,0.92);
+      --text: #2b2a28;
+      --sub: #786d65;
+      --brand: #b7332f;
+      --brand-dark: #8f211f;
+      --gold: #c9923d;
+      --line: rgba(183, 51, 47, 0.12);
+      --shadow: 0 10px 30px rgba(108, 53, 42, 0.12);
+      --radius: 18px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.45;
+    }
+
+    .page {
+      max-width: 720px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top right, rgba(201,146,61,.13), transparent 32%),
+        linear-gradient(180deg, #fffaf7 0%, #f7f4f1 38%, #f6f1ed 100%);
+    }
+
+    .hero {
+      position: relative;
+      padding: calc(18px + var(--safe-top)) 18px 18px;
+      background: linear-gradient(135deg, #b7332f 0%, #d06037 55%, #df8b4f 100%);
+      color: #fff;
+      overflow: hidden;
+    }
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,.10);
+      filter: blur(2px);
+    }
+    .hero::before { width: 180px; height: 180px; right: -40px; top: -30px; }
+    .hero::after { width: 120px; height: 120px; left: -30px; bottom: -40px; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.16);
+      font-size: 12px;
+      backdrop-filter: blur(8px);
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 {
+      position: relative;
+      z-index: 1;
+      margin: 12px 0 10px;
+      font-size: 28px;
+      line-height: 1.18;
+      letter-spacing: .3px;
+    }
+
+    .hero-sub {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-size: 14px;
+      color: rgba(255,255,255,.92);
+    }
+
+    .hero-stats {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .stat {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 10px 6px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+    .stat strong {
+      display: block;
+      font-size: 20px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat span {
+      font-size: 11px;
+      opacity: .9;
+    }
+
+    .wechat-tip {
+      margin: 14px 16px 0;
+      background: linear-gradient(135deg, #fff7e7, #fffef9);
+      border: 1px solid rgba(201,146,61,.35);
+      border-radius: 16px;
+      padding: 14px 14px;
+      box-shadow: var(--shadow);
+    }
+    .wechat-tip h2,
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+    .wechat-tip p {
+      margin: 0;
+      color: var(--sub);
+      font-size: 13px;
+    }
+    .wechat-tip .mini {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #9a7a46;
+    }
+
+    .map-wrap {
+      margin: 14px 16px 0;
+      background: #fff;
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(183,51,47,.08);
+    }
+    .map-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid rgba(183,51,47,.08);
+    }
+    .map-head .left h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+    .map-head .left p {
+      margin: 4px 0 0;
+      color: var(--sub);
+      font-size: 12px;
+    }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .mini-btn {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      background: #f8ebe9;
+      color: var(--brand);
+      padding: 9px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .mini-btn.primary { background: var(--brand); color: #fff; }
+    #map {
+      height: 42vh;
+      min-height: 300px;
+      max-height: 460px;
+    }
+
+    .legend-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 14px 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.6), rgba(248,240,237,.8));
+    }
+    .legend-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #fff;
+      font-size: 12px;
+      color: #574d47;
+      border: 1px solid rgba(0,0,0,.06);
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .hotel-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      background: var(--brand);
+    }
+
+    .section {
+      padding: 18px 16px 0;
+    }
+    .section-sub {
+      color: var(--sub);
+      font-size: 13px;
+      margin: -4px 0 12px;
+    }
+
+    .hotel-card {
+      background: linear-gradient(135deg, #fff 0%, #fff8f6 100%);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 12px;
+    }
+    .hotel-top {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .hotel-icon {
+      width: 42px; height: 42px;
+      border-radius: 14px;
+      background: #fde9e8;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .hotel-name { font-size: 18px; margin: 0; }
+    .hotel-addr { margin: 4px 0 0; color: var(--sub); font-size: 13px; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag {
+      font-size: 12px;
+      color: #7a4f2c;
+      background: #fff7ea;
+      border: 1px solid rgba(201,146,61,.28);
+      border-radius: 999px;
+      padding: 6px 10px;
+    }
+
+    .days {
+      display: grid;
+      gap: 12px;
+      padding-bottom: 88px;
+    }
+
+    .day-card {
+      background: var(--card);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(183,51,47,.08);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+    .day-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid rgba(183,51,47,.08);
+    }
+    .day-no {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .day-head h3 { margin: 0; font-size: 16px; }
+    .day-head p { margin: 4px 0 0; color: var(--sub); font-size: 12px; }
+
+    .spot-list {
+      padding: 10px 12px 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .spot-card {
+      background: #fff;
+      border: 1px solid rgba(183,51,47,.08);
+      border-radius: 16px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .spot-card:active,
+    .spot-card.active {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(183,51,47,.10);
+      border-color: rgba(183,51,47,.22);
+    }
+    .spot-title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .spot-code {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .spot-title h4 {
+      margin: 0;
+      font-size: 15px;
+    }
+    .spot-title p {
+      margin: 4px 0 0;
+      color: var(--sub);
+      font-size: 12px;
+    }
+    .metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .metric {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .metric.km { background: #fff7e8; color: #a86d1f; }
+    .metric.drive { background: #eaf4ff; color: #1c6cc5; }
+    .metric.walk { background: #e9f8ef; color: #218653; }
+
+    .smart-note {
+      border-top: 1px dashed rgba(183,51,47,.16);
+      padding-top: 10px;
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    .bottom-bar {
+      position: sticky;
+      bottom: 0;
+      z-index: 999;
+      padding: 10px 16px calc(10px + var(--safe-bottom));
+      background: linear-gradient(180deg, rgba(247,244,241,0), rgba(247,244,241,.86) 18%, rgba(247,244,241,.96) 100%);
+      backdrop-filter: blur(12px);
+    }
+    .bottom-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .bottom-btn {
+      appearance: none;
+      border: none;
+      border-radius: 16px;
+      padding: 14px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+    .bottom-btn.primary {
+      background: linear-gradient(135deg, var(--brand), #d86137);
+      color: #fff;
+    }
+    .bottom-btn.secondary {
+      background: #fff;
+      color: var(--brand);
+      border: 1px solid rgba(183,51,47,.14);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(88px + var(--safe-bottom));
+      transform: translateX(-50%) translateY(10px);
+      background: rgba(43,42,40,.88);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all .22s ease;
+      z-index: 1200;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (min-width: 760px) {
+      .hero { padding: 26px 24px 20px; }
+      .wechat-tip, .map-wrap, .section { margin-left: 20px; margin-right: 20px; padding-left: 0; padding-right: 0; }
+      .section { padding-top: 22px; }
+      .days { padding-bottom: 100px; }
+      .bottom-bar { max-width: 720px; margin: 0 auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div class="eyebrow">📱 微信分享版 H5</div>
+      <h1>洛阳 5 日旅行地图</h1>
+      <p class="hero-sub">4月28日 - 5月2日 · 一页看清每日景点、酒店位置与距离</p>
+      <div class="hero-stats">
+        <div class="stat"><strong>5</strong><span>旅行天数</span></div>
+        <div class="stat"><strong>9</strong><span>景点/站点</span></div>
+        <div class="stat"><strong>125km</strong><span>最远单点</span></div>
+        <div class="stat"><strong>2处</strong><span>步行可达</span></div>
+      </div>
+    </section>
+
+    <section class="wechat-tip">
+      <h2>微信内怎么分享</h2>
+      <p>部署到公网后，直接把页面链接发到微信聊天即可打开。进入微信后，也可以点右上角 <strong>···</strong> 转发给朋友或分享到朋友圈。</p>
+      <p class="mini">当前预览版是本地地址，仅用于查看效果；真正分享时需要替换成公网 HTTPS 链接。</p>
+    </section>
+
+    <section class="map-wrap">
+      <div class="map-head">
+        <div class="left">
+          <h2>行程总地图</h2>
+          <p>点击下方景点卡片，地图会自动跳转定位</p>
+        </div>
+        <div class="btn-row">
+          <button class="mini-btn" onclick="focusHotel()">看酒店</button>
+          <button class="mini-btn primary" onclick="showAll()">看全程</button>
+        </div>
+      </div>
+      <div id="map"></div>
+      <div class="legend-strip">
+        <span class="legend-pill"><i class="hotel-dot"></i>洛阳华美达酒店</span>
+        <span class="legend-pill"><i class="legend-dot" style="background:#d94b45"></i>DAY1</span>
+        <span class="legend-pill"><i class="legend-dot" style="background:#df8a2f"></i>DAY2</span>
+        <span class="legend-pill"><i class="legend-dot" style="background:#31a36c"></i>DAY3</span>
+        <span class="legend-pill"><i class="legend-dot" style="background:#297fd6"></i>DAY4</span>
+        <span class="legend-pill"><i class="legend-dot" style="background:#7f8c8d"></i>DAY5</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">全程入住酒店</h2>
+      <p class="section-sub">以洛阳华美达酒店为中心，方便串联市区核心景点。</p>
+      <div class="hotel-card">
+        <div class="hotel-top">
+          <div class="hotel-icon">🏨</div>
+          <div>
+            <h3 class="hotel-name">洛阳华美达酒店</h3>
+            <p class="hotel-addr">河南省洛阳市西工区金谷园路 76 号</p>
+          </div>
+        </div>
+        <div class="tag-row">
+          <span class="tag">近明堂天堂 / 应天门</span>
+          <span class="tag">市区行程衔接方便</span>
+          <span class="tag">适合微信直接转发行程</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">每日行程与距离</h2>
+      <p class="section-sub">所有距离均为景点到酒店的参考距离，适合快速判断返程强度。</p>
+      <div class="days" id="days"></div>
+    </section>
+
+    <div class="bottom-bar">
+      <div class="bottom-inner">
+        <button class="bottom-btn secondary" onclick="copyPageUrl()">复制页面链接</button>
+        <button class="bottom-btn primary" onclick="showShareGuide()">微信分享提示</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const hotel = {
+      name: '洛阳华美达酒店',
+      address: '洛阳市西工区金谷园路76号',
+      lat: 34.6665,
+      lng: 112.4538
+    };
+
+    const days = [
+      {
+        day: 1,
+        date: '4月28日 周二',
+        theme: '洛阳抵达',
+        color: '#d94b45',
+        note: '第一天安排轻松，先熟悉洛阳老城氛围。',
+        spots: [
+          { code: 'A', name: '洛邑古城', desc: '老城夜景氛围很好，适合首日慢逛。', km: '2.8 km', drive: '约10分钟', walk: '约35分钟', lat: 34.6830, lng: 112.4747 }
+        ]
+      },
+      {
+        day: 2,
+        date: '4月29日 周三',
+        theme: '栾川远郊',
+        color: '#df8a2f',
+        note: '老君山距离最远，建议尽早出发，返程较晚。',
+        spots: [
+          { code: 'B', name: '老君山景区', desc: '远途核心景点，适合单独安排一整天。', km: '125 km', drive: '约1.5-2小时', walk: null, lat: 33.7843, lng: 111.5890 }
+        ]
+      },
+      {
+        day: 3,
+        date: '4月30日 周四',
+        theme: '登封 + 洛阳',
+        color: '#31a36c',
+        note: '少林寺是远程往返，博物馆适合回市区后补充参观。',
+        spots: [
+          { code: 'C', name: '少林寺', desc: '登封方向，返酒店前路程较长。', km: '67 km', drive: '约1小时', walk: null, lat: 34.5083, lng: 112.9374 },
+          { code: 'D', name: '洛阳博物馆', desc: '文化补给站，离酒店不算远。', km: '5.2 km', drive: '约15分钟', walk: '约65分钟', lat: 34.6923, lng: 112.4084 }
+        ]
+      },
+      {
+        day: 4,
+        date: '5月1日 周五',
+        theme: '洛阳市区精华',
+        color: '#297fd6',
+        note: '这天最舒服，酒店位置优势完全体现出来。',
+        spots: [
+          { code: 'E', name: '白马寺', desc: '佛教祖庭，单程稍远。', km: '9.5 km', drive: '约25分钟', walk: null, lat: 34.6869, lng: 112.5723 },
+          { code: 'F', name: '中国国花园', desc: '五一期间牡丹看点很强。', km: '4.3 km', drive: '约12分钟', walk: '约55分钟', lat: 34.6556, lng: 112.4208 },
+          { code: 'G', name: '隋唐洛阳城明堂天堂', desc: '离酒店最近，晚上去也很合适。', km: '0.8 km', drive: '约5分钟', walk: '约10分钟', lat: 34.6643, lng: 112.4562 },
+          { code: 'H', name: '隋唐洛阳城应天门遗址', desc: '可和明堂天堂联动安排。', km: '1.0 km', drive: '约5分钟', walk: '约12分钟', lat: 34.6680, lng: 112.4565 }
+        ]
+      },
+      {
+        day: 5,
+        date: '5月2日 周六',
+        theme: '返程日',
+        color: '#7f8c8d',
+        note: '龙门石窟适合作为收尾，之后直接返程。',
+        spots: [
+          { code: 'I', name: '龙门石窟', desc: '洛阳代表性世界文化遗产。', km: '12.5 km', drive: '约30分钟', walk: null, lat: 34.5619, lng: 112.4733 }
+        ]
+      }
+    ];
+
+    const flatSpots = days.flatMap(day => day.spots.map(spot => ({ ...spot, day: day.day, color: day.color, date: day.date, theme: day.theme })));
+
+    const map = L.map('map', { zoomControl: false, tap: true }).setView([34.648, 112.456], 11);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    function hotelIcon() {
+      return L.divIcon({
+        className: '',
+        html: '<div style="width:34px;height:34px;border-radius:10px;background:#b7332f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;border:2px solid #fff;box-shadow:0 6px 16px rgba(183,51,47,.35)">🏨</div>',
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
+      });
+    }
+
+    function spotIcon(code, color) {
+      return L.divIcon({
+        className: '',
+        html: `<div style="width:30px;height:30px;border-radius:50%;background:${color};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.18)">${code}</div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+    }
+
+    const hotelMarker = L.marker([hotel.lat, hotel.lng], { icon: hotelIcon() })
+      .addTo(map)
+      .bindPopup(`<strong>🏨 ${hotel.name}</strong><br>${hotel.address}<br><small>全程住宿中心点</small>`);
+
+    const spotMarkers = [];
+    const group = L.featureGroup().addTo(map);
+    group.addLayer(hotelMarker);
+
+    flatSpots.forEach((spot, idx) => {
+      const marker = L.marker([spot.lat, spot.lng], { icon: spotIcon(spot.code, spot.color) })
+        .addTo(group)
+        .bindPopup(`
+          <div style="min-width:170px">
+            <strong style="color:${spot.color}">${spot.code}. ${spot.name}</strong><br>
+            <small style="color:#7c6f68">${spot.date} · ${spot.theme}</small><br><br>
+            <span style="display:inline-block;background:#fff7e8;color:#a86d1f;border-radius:999px;padding:4px 8px;font-size:12px">📍 ${spot.km}</span>
+            <span style="display:inline-block;background:#eaf4ff;color:#1c6cc5;border-radius:999px;padding:4px 8px;font-size:12px;margin-top:6px">🚗 ${spot.drive}</span>
+            ${spot.walk ? `<span style="display:inline-block;background:#e9f8ef;color:#218653;border-radius:999px;padding:4px 8px;font-size:12px;margin-top:6px">🚶 ${spot.walk}</span>` : ''}
+            <div style="margin-top:8px;font-size:12px;color:#7c6f68">${spot.desc}</div>
+          </div>
+        `);
+      spotMarkers[idx] = marker;
+      L.polyline([[hotel.lat, hotel.lng], [spot.lat, spot.lng]], {
+        color: spot.color,
+        weight: 2,
+        opacity: 0.55,
+        dashArray: parseFloat(spot.km) > 20 ? '8,6' : '4,6'
+      }).addTo(group);
+    });
+
+    const dayContainer = document.getElementById('days');
+    dayContainer.innerHTML = days.map(day => `
+      <article class="day-card">
+        <div class="day-head">
+          <div class="day-no" style="background:${day.color}">D${day.day}</div>
+          <div>
+            <h3>${day.date} · ${day.theme}</h3>
+            <p>${day.spots.map(s => s.name).join(' · ')}</p>
+          </div>
+        </div>
+        <div class="spot-list">
+          ${day.spots.map(spot => `
+            <div class="spot-card" id="card-${spot.code}" onclick="focusSpot('${spot.code}')">
+              <div class="spot-title-row">
+                <div class="spot-code" style="background:${day.color}">${spot.code}</div>
+                <div class="spot-title">
+                  <h4>${spot.name}</h4>
+                  <p>${spot.desc}</p>
+                </div>
+              </div>
+              <div class="metrics">
+                <span class="metric km">📍 ${spot.km}</span>
+                <span class="metric drive">🚗 ${spot.drive}</span>
+                ${spot.walk ? `<span class="metric walk">🚶 ${spot.walk}</span>` : ''}
+              </div>
+            </div>
+          `).join('')}
+          <div class="smart-note">💡 ${day.note}</div>
+        </div>
+      </article>
+    `).join('');
+
+    function clearActive() {
+      document.querySelectorAll('.spot-card').forEach(el => el.classList.remove('active'));
+    }
+
+    window.focusSpot = function(code) {
+      const index = flatSpots.findIndex(item => item.code === code);
+      if (index === -1) return;
+      clearActive();
+      const card = document.getElementById(`card-${code}`);
+      if (card) card.classList.add('active');
+      const spot = flatSpots[index];
+      map.flyTo([spot.lat, spot.lng], window.innerWidth < 768 ? 13 : 12, { duration: 0.6 });
+      setTimeout(() => spotMarkers[index].openPopup(), 280);
+    };
+
+    window.focusHotel = function() {
+      clearActive();
+      map.flyTo([hotel.lat, hotel.lng], 14, { duration: 0.6 });
+      setTimeout(() => hotelMarker.openPopup(), 280);
+    };
+
+    window.showAll = function() {
+      clearActive();
+      map.fitBounds(group.getBounds(), { padding: [24, 24] });
+    };
+
+    const toast = document.getElementById('toast');
+    let toastTimer = null;
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+
+    window.copyPageUrl = async function() {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast('页面链接已复制');
+      } catch (e) {
+        showToast('复制失败，请手动复制地址栏链接');
+      }
+    };
+
+    window.showShareGuide = function() {
+      showToast('微信里点右上角 ··· 即可转发');
+    };
+
+    showAll();
+  </script>
+</body>
+</html>
