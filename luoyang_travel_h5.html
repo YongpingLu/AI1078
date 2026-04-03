@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#9b2320" />
+  <meta name="description" content="洛阳5日旅游行程 · 4月28日—5月2日 · 景点地图与距离" />
+  <meta property="og:title" content="洛阳5日旅行地图 🌸" />
+  <meta property="og:description" content="4.28—5.2 洛阳深度游行程，9处景点到酒店距离一图看懂" />
+  <meta property="og:image" content="https://images.unsplash.com/photo-1551410224-699683e15636?w=600" />
+  <title>洛阳5日行程 · 旅行地图</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --bg: #f8f4f0;
+      --card: rgba(255,255,255,0.94);
+      --text: #2a2826;
+      --sub: #7a6e67;
+      --brand: #9b2320;
+      --brand2: #c4471e;
+      --gold: #c49b3c;
+      --gold2: #e8c56a;
+      --line: rgba(155,35,32,0.10);
+      --shadow: 0 8px 28px rgba(100,44,34,0.12);
+      --radius: 20px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      line-height: 1.5;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    .page {
+      max-width: 720px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: var(--bg);
+      position: relative;
+    }
+
+    /* ─────────────── COVER 封面 ─────────────── */
+    .cover {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow: hidden;
+      background: #1a0a08;
+    }
+
+    /* 背景渐变层 */
+    .cover-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(160deg,
+          #6b1a12 0%,
+          #9b2320 28%,
+          #c4471e 56%,
+          #d4813e 75%,
+          #c49b3c 88%,
+          #e8c56a 100%
+        );
+    }
+
+    /* 纹理装饰：水墨山形 */
+    .cover-mountain {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 55%;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .cover-mountain svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 圆形光晕 */
+    .cover-glow {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .glow-1 {
+      width: 320px; height: 320px;
+      top: -60px; right: -80px;
+      background: radial-gradient(circle, rgba(228,190,100,.28) 0%, transparent 70%);
+    }
+    .glow-2 {
+      width: 200px; height: 200px;
+      bottom: 35%; left: -50px;
+      background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 65%);
+    }
+
+    /* 牡丹装饰 */
+    .peony-decor {
+      position: absolute;
+      font-size: 72px;
+      opacity: 0.22;
+      pointer-events: none;
+      line-height: 1;
+      filter: blur(1px);
+    }
+    .peony-1 { top: 12%; right: -10px; transform: rotate(15deg); }
+    .peony-2 { top: 38%; left: -14px; transform: rotate(-20deg) scale(0.7); font-size: 56px; }
+    .peony-3 { bottom: 28%; right: 10px; transform: rotate(8deg) scale(0.55); font-size: 44px; }
+
+    /* 文字印章 */
+    .seal {
+      position: absolute;
+      top: calc(22px + var(--safe-top));
+      right: 20px;
+      width: 52px; height: 52px;
+      border: 2px solid rgba(255,255,255,.5);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: rgba(255,255,255,.85);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      pointer-events: none;
+    }
+
+    /* 封面内容 */
+    .cover-content {
+      position: relative;
+      z-index: 2;
+      padding: 0 22px calc(32px + var(--safe-bottom)) 22px;
+    }
+
+    .cover-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.22);
+      font-size: 12px;
+      color: rgba(255,255,255,.9);
+      backdrop-filter: blur(8px);
+      margin-bottom: 14px;
+    }
+    .eyebrow-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold2);
+    }
+
+    .cover-title {
+      font-size: 42px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: 6px;
+      text-shadow: 0 4px 18px rgba(0,0,0,.25);
+    }
+    .cover-title-en {
+      font-size: 13px;
+      color: rgba(255,255,255,.6);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    .cover-date-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .cover-date {
+      font-size: 15px;
+      color: rgba(255,255,255,.88);
+      font-weight: 600;
+    }
+    .cover-date-sep {
+      width: 30px;
+      height: 1px;
+      background: rgba(255,255,255,.3);
+    }
+    .cover-date-sub {
+      font-size: 13px;
+      color: rgba(255,255,255,.6);
+    }
+
+    .cover-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 26px;
+    }
+    .cover-stat {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 14px;
+      padding: 10px 6px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+    .cover-stat strong {
+      display: block;
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .cover-stat span {
+      font-size: 11px;
+      color: rgba(255,255,255,.75);
+    }
+
+    .cover-cta {
+      display: flex;
+      gap: 10px;
+    }
+    .cta-btn {
+      flex: 1;
+      appearance: none;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .cta-btn:active { opacity: .8; }
+    .cta-primary {
+      background: #fff;
+      color: var(--brand);
+    }
+    .cta-secondary {
+      background: rgba(255,255,255,.15);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.25);
+      backdrop-filter: blur(8px);
+    }
+
+    /* 封面底部滑动提示 */
+    .scroll-hint {
+      text-align: center;
+      color: rgba(255,255,255,.5);
+      font-size: 12px;
+      padding-bottom: 8px;
+      margin-top: -16px;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+    }
+    .scroll-hint::before {
+      content: "↓";
+      display: block;
+      font-size: 16px;
+      margin-bottom: 2px;
+      animation: bounce 2s infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(4px); }
+    }
+
+    /* ─────────────── SECTION 通用 ─────────────── */
+    .section-block {
+      padding: 20px 16px 0;
+    }
+    .section-hd {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .section-hd h2 {
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .section-hd .accent-bar {
+      display: inline-block;
+      width: 20px;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--brand);
+      margin-bottom: 2px;
+    }
+    .section-sub {
+      color: var(--sub);
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    /* ─────────────── MAP ─────────────── */
+    .map-wrap {
+      margin: 20px 16px 0;
+      background: #fff;
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+    }
+    .map-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .map-head h2 {
+      margin: 0;
+      font-size: 15px;
+    }
+    .map-head p {
+      margin: 3px 0 0;
+      color: var(--sub);
+      font-size: 12px;
+    }
+    .btn-row {
+      display: flex;
+      gap: 7px;
+    }
+    .mini-btn {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      background: #f5e9e8;
+      color: var(--brand);
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .mini-btn.primary {
+      background: var(--brand);
+      color: #fff;
+    }
+    #map {
+      height: 42vh;
+      min-height: 280px;
+      max-height: 440px;
+    }
+    .legend-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      padding: 10px 14px 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.7), rgba(248,240,237,.9));
+    }
+    .legend-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #fff;
+      font-size: 12px;
+      color: #574d47;
+      border: 1px solid rgba(0,0,0,.06);
+    }
+    .legend-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .hotel-dot {
+      width: 9px; height: 9px;
+      border-radius: 3px;
+      background: var(--brand);
+      flex-shrink: 0;
+    }
+
+    /* ─────────────── HOTEL CARD ─────────────── */
+    .hotel-card {
+      background: linear-gradient(135deg, #fff 0%, #fff8f5 100%);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+    }
+    .hotel-top {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .hotel-icon {
+      width: 46px; height: 46px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #f8d7d6, #fce6d4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .hotel-name { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+    .hotel-addr { color: var(--sub); font-size: 13px; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 7px; }
+    .tag {
+      font-size: 12px;
+      color: #7a4f2c;
+      background: linear-gradient(135deg, #fff8ed, #fff3e0);
+      border: 1px solid rgba(201,146,61,.24);
+      border-radius: 999px;
+      padding: 5px 10px;
+    }
+
+    /* ─────────────── DAY CARDS ─────────────── */
+    .days { display: grid; gap: 14px; padding-bottom: 90px; }
+
+    .day-card {
+      background: var(--card);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(155,35,32,.07);
+      overflow: hidden;
+    }
+    .day-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid rgba(155,35,32,.07);
+    }
+    .day-badge {
+      flex-shrink: 0;
+      text-align: center;
+      padding: 6px 0;
+      width: 44px;
+    }
+    .day-num {
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .day-label {
+      font-size: 10px;
+      letter-spacing: 1px;
+      opacity: .75;
+      color: #fff;
+      margin-top: 2px;
+    }
+    .day-badge-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .day-head-info h3 { margin: 0; font-size: 15px; font-weight: 700; }
+    .day-head-info p { margin: 3px 0 0; color: var(--sub); font-size: 12px; }
+
+    .spot-list {
+      padding: 12px 14px 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .spot-card {
+      background: #fff;
+      border: 1px solid rgba(155,35,32,.08);
+      border-radius: 16px;
+      padding: 13px;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+    .spot-card:active, .spot-card.active {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(155,35,32,.12);
+      border-color: rgba(155,35,32,.22);
+    }
+    .spot-title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .spot-code {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .spot-title h4 { margin: 0; font-size: 15px; font-weight: 700; }
+    .spot-title p { margin: 3px 0 0; color: var(--sub); font-size: 12px; }
+    .metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .metric {
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .metric.km { background: #fff7e6; color: #a06820; }
+    .metric.drive { background: #eaf3ff; color: #1a69c2; }
+    .metric.walk { background: #e8f7ef; color: #1c7d4c; }
+    .smart-note {
+      margin-top: 4px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(155,35,32,.14);
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    /* ─────────────── 朋友圈分享海报区 ─────────────── */
+    .poster-hint {
+      margin: 20px 16px 0;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .poster-inner {
+      background: linear-gradient(135deg, #9b2320 0%, #c4471e 40%, #d4813e 70%, #c49b3c 100%);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .poster-inner::before {
+      content: "🌸";
+      position: absolute;
+      font-size: 80px;
+      right: -10px;
+      top: -10px;
+      opacity: 0.18;
+      filter: blur(2px);
+    }
+    .poster-inner::after {
+      content: "🏮";
+      position: absolute;
+      font-size: 60px;
+      left: -5px;
+      bottom: -10px;
+      opacity: 0.15;
+      filter: blur(2px);
+    }
+    .poster-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .poster-subtitle {
+      font-size: 13px;
+      color: rgba(255,255,255,.8);
+      margin-bottom: 14px;
+    }
+    .poster-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 14px;
+    }
+    .poster-tag {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,.92);
+      backdrop-filter: blur(6px);
+    }
+    .poster-cta {
+      background: #fff;
+      color: var(--brand);
+      border: none;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* ─────────────── 底部操作栏 ─────────────── */
+    .bottom-bar {
+      position: sticky;
+      bottom: 0;
+      z-index: 999;
+      padding: 10px 16px calc(10px + var(--safe-bottom));
+      background: linear-gradient(180deg, rgba(248,244,240,0) 0%, rgba(248,244,240,.90) 20%, rgba(248,244,240,.97) 100%);
+      backdrop-filter: blur(14px);
+    }
+    .bottom-inner {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 10px;
+    }
+    .bottom-btn {
+      appearance: none;
+      border: none;
+      border-radius: 16px;
+      padding: 14px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: opacity .15s;
+    }
+    .bottom-btn:active { opacity: .8; }
+    .bottom-btn.primary {
+      background: linear-gradient(135deg, var(--brand), #c4471e);
+      color: #fff;
+    }
+    .bottom-btn.secondary {
+      background: #fff;
+      color: var(--brand);
+      border: 1px solid rgba(155,35,32,.14);
+    }
+
+    /* ─────────────── Toast ─────────────── */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(80px + var(--safe-bottom));
+      transform: translateX(-50%) translateY(10px);
+      background: rgba(40,30,26,.9);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all .22s ease;
+      z-index: 2000;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ─────────────── 宽屏适配 ─────────────── */
+    @media (min-width: 720px) {
+      .cover { min-height: 90vh; }
+      .section-block, .map-wrap, .poster-hint { margin-left: 22px; margin-right: 22px; padding-left: 0; padding-right: 0; }
+      .section-block { padding-left: 0; padding-right: 0; }
+      .days { padding-bottom: 100px; }
+      .bottom-bar { max-width: 720px; margin: 0 auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- ══════════════ COVER 封面 ══════════════ -->
+    <section class="cover" id="cover">
+      <div class="cover-bg"></div>
+      <div class="cover-glow glow-1"></div>
+      <div class="cover-glow glow-2"></div>
+
+      <!-- 水墨山形 SVG -->
+      <div class="cover-mountain">
+        <svg viewBox="0 0 390 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,300 L0,180 Q40,110 90,140 Q130,90 170,100 Q200,70 230,95 Q270,55 310,80 Q345,60 390,90 L390,300 Z" fill="rgba(0,0,0,0.22)"/>
+          <path d="M0,300 L0,200 Q50,165 100,180 Q140,145 185,160 Q220,130 260,148 Q300,120 340,138 Q365,130 390,148 L390,300 Z" fill="rgba(0,0,0,0.18)"/>
+          <path d="M0,300 L0,230 Q60,210 120,220 Q160,195 200,210 Q240,188 280,200 Q320,182 390,195 L390,300 Z" fill="rgba(0,0,0,0.20)"/>
+          <!-- 龙门石窟轮廓暗示 -->
+          <path d="M155,230 L155,195 Q157,185 165,180 Q173,175 178,182 L185,195 L185,230 Z" fill="rgba(255,255,255,0.08)"/>
+          <path d="M200,225 L200,192 Q203,182 212,178 Q221,174 226,183 L230,195 L230,225 Z" fill="rgba(255,255,255,0.06)"/>
+        </svg>
+      </div>
+
+      <div class="peony-decor peony-1">🌺</div>
+      <div class="peony-decor peony-2">🌸</div>
+      <div class="peony-decor peony-3">🏮</div>
+
+      <!-- 印章 -->
+      <div class="seal">洛阳</div>
+
+      <div class="cover-content">
+        <div class="cover-eyebrow">
+          <div class="eyebrow-dot"></div>
+          牡丹之都 · 千年古都
+        </div>
+        <h1 class="cover-title">洛阳<br/>五日游</h1>
+        <p class="cover-title-en">Luoyang · 5-Day Journey</p>
+        <div class="cover-date-row">
+          <span class="cover-date">4月28日 — 5月2日</span>
+          <div class="cover-date-sep"></div>
+          <span class="cover-date-sub">五一黄金周</span>
+        </div>
+        <div class="cover-stats">
+          <div class="cover-stat"><strong>5</strong><span>天</span></div>
+          <div class="cover-stat"><strong>9</strong><span>景点</span></div>
+          <div class="cover-stat"><strong>125</strong><span>km最远</span></div>
+          <div class="cover-stat"><strong>步行</strong><span>2处可达</span></div>
+        </div>
+        <div class="cover-cta">
+          <button class="cta-btn cta-primary" onclick="scrollToMap()">📍 查看地图</button>
+          <button class="cta-btn cta-secondary" onclick="scrollToItinerary()">📅 查看行程</button>
+        </div>
+      </div>
+      <div class="scroll-hint">下滑查看详情</div>
+    </section>
+
+    <!-- ══════════════ MAP 行程地图 ══════════════ -->
+    <section class="map-wrap" id="map-section">
+      <div class="map-head">
+        <div>
+          <h2>🗺️ 行程总地图</h2>
+          <p>点击下方景点卡片可自动定位</p>
+        </div>
+        <div class="btn-row">
+          <button class="mini-btn" onclick="focusHotel()">看酒店</button>
+          <button class="mini-btn primary" onclick="showAll()">全程</button>
+        </div>
+      </div>
+      <div id="map"></div>
+      <div class="legend-strip">
+        <span class="legend-pill"><i class="hotel-dot"></i>华美达酒店</span>
+        <span class="legend-pill"><i class="legend-dot" style="background:#d94b45"></i>DAY 1</span>
+        <span class="legend-pill"><i class="legend-dot" style="background:#df8a2f"></i>DAY 2</span>
+        <span class="legend-pill"><i class="legend-dot" style="background:#31a36c"></i>DAY 3</span>
+        <span class="legend-pill"><i class="legend-dot" style="background:#297fd6"></i>DAY 4</span>
+        <span class="legend-pill"><i class="legend-dot" style="background:#7f8c8d"></i>DAY 5</span>
+      </div>
+    </section>
+
+    <!-- ══════════════ HOTEL ══════════════ -->
+    <section class="section-block">
+      <div class="section-hd">
+        <span class="accent-bar"></span>
+        <h2>全程住宿</h2>
+      </div>
+      <p class="section-sub">5 晚均住同一酒店，位置绝佳，步行可达多个核心景点。</p>
+      <div class="hotel-card">
+        <div class="hotel-top">
+          <div class="hotel-icon">🏨</div>
+          <div>
+            <div class="hotel-name">洛阳华美达酒店</div>
+            <div class="hotel-addr">洛阳市西工区金谷园路 76 号</div>
+          </div>
+        </div>
+        <div class="tag-row">
+          <span class="tag">🏮 近明堂天堂 0.8km</span>
+          <span class="tag">🏮 近应天门 1.0km</span>
+          <span class="tag">🌸 市区串联方便</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ ITINERARY ══════════════ -->
+    <section class="section-block" id="itinerary-section">
+      <div class="section-hd">
+        <span class="accent-bar"></span>
+        <h2>每日行程 &amp; 距离</h2>
+      </div>
+      <p class="section-sub">距离均为景点到酒店的参考距离，帮你快速判断返程时间。</p>
+      <div class="days" id="days"></div>
+    </section>
+
+    <!-- ══════════════ 朋友圈截图提示卡 ══════════════ -->
+    <section class="poster-hint" id="share-section">
+      <div class="poster-inner">
+        <div class="poster-title">📤 分享这份行程</div>
+        <div class="poster-subtitle">把洛阳的美好发给同行的朋友 🌸</div>
+        <div class="poster-tags">
+          <span class="poster-tag">🌺 牡丹盛开</span>
+          <span class="poster-tag">🏛️ 千年古都</span>
+          <span class="poster-tag">🗿 龙门石窟</span>
+          <span class="poster-tag">⛰️ 老君山</span>
+          <span class="poster-tag">🥋 少林寺</span>
+        </div>
+        <button class="poster-cta" onclick="copyPageUrl()">复制链接发给朋友</button>
+      </div>
+    </section>
+
+    <!-- ══════════════ BOTTOM BAR ══════════════ -->
+    <div class="bottom-bar">
+      <div class="bottom-inner">
+        <button class="bottom-btn secondary" onclick="scrollToCover()">⬆ 封面</button>
+        <button class="bottom-btn primary" onclick="copyPageUrl()">🔗 复制链接分享</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const hotel = {
+      name: '洛阳华美达酒店',
+      address: '洛阳市西工区金谷园路76号',
+      lat: 34.6665,
+      lng: 112.4538
+    };
+
+    const days = [
+      {
+        day: 1, date: '4月28日 周二', theme: '抵达洛阳', color: '#d94b45',
+        note: '第一天安排轻松，先沉浸老城历史氛围。',
+        spots: [
+          { code: 'A', name: '洛邑古城', desc: '老城夜景氛围极佳，建议傍晚入园。', km: '2.8 km', drive: '约10分钟', walk: '约35分钟', lat: 34.6830, lng: 112.4747 }
+        ]
+      },
+      {
+        day: 2, date: '4月29日 周三', theme: '栾川远郊', color: '#df8a2f',
+        note: '老君山距离最远，建议7点前出发，全天行程。',
+        spots: [
+          { code: 'B', name: '老君山景区', desc: '道教圣地，金顶云海震撼。全天行程，早出发。', km: '125 km', drive: '约1.5–2小时', walk: null, lat: 33.7843, lng: 111.5890 }
+        ]
+      },
+      {
+        day: 3, date: '4月30日 周四', theme: '登封 + 洛阳', color: '#31a36c',
+        note: '少林寺远程，下午返回后可到博物馆补充文化体验。',
+        spots: [
+          { code: 'C', name: '少林寺', desc: '武术圣地，建议上午参观。', km: '67 km', drive: '约1小时', walk: null, lat: 34.5083, lng: 112.9374 },
+          { code: 'D', name: '洛阳博物馆', desc: '下午返程后顺道参观，文物精彩。', km: '5.2 km', drive: '约15分钟', walk: '约65分钟', lat: 34.6923, lng: 112.4084 }
+        ]
+      },
+      {
+        day: 4, date: '5月1日 周五', theme: '市区精华日', color: '#297fd6',
+        note: '这天最轻松！天堂明堂和应天门步行即达，五一人多建议早场。',
+        spots: [
+          { code: 'E', name: '白马寺', desc: '中国第一古刹，建议上午前往。', km: '9.5 km', drive: '约25分钟', walk: null, lat: 34.6869, lng: 112.5723 },
+          { code: 'F', name: '中国国花园', desc: '五一牡丹最盛，花型珍贵品种多。', km: '4.3 km', drive: '约12分钟', walk: '约55分钟', lat: 34.6556, lng: 112.4208 },
+          { code: 'G', name: '明堂 · 天堂', desc: '步行可达，夜间灯光秀绝美。', km: '0.8 km', drive: '约5分钟', walk: '约10分钟', lat: 34.6643, lng: 112.4562 },
+          { code: 'H', name: '应天门遗址', desc: '与明堂联动，步行5分钟互达。', km: '1.0 km', drive: '约5分钟', walk: '约12分钟', lat: 34.6680, lng: 112.4565 }
+        ]
+      },
+      {
+        day: 5, date: '5月2日 周六', theme: '返程日', color: '#7f8c8d',
+        note: '龙门石窟作为完美收尾，之后直接启程回家。',
+        spots: [
+          { code: 'I', name: '龙门石窟', desc: '世界文化遗产，洛阳之行的完美收尾。', km: '12.5 km', drive: '约30分钟', walk: null, lat: 34.5619, lng: 112.4733 }
+        ]
+      }
+    ];
+
+    const flatSpots = days.flatMap(day =>
+      day.spots.map(spot => ({ ...spot, day: day.day, color: day.color, date: day.date, theme: day.theme }))
+    );
+
+    // ─── 地图 ───
+    const map = L.map('map', { zoomControl: false, tap: true }).setView([34.648, 112.456], 11);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    const hotelIcon = () => L.divIcon({
+      className: '',
+      html: '<div style="width:36px;height:36px;border-radius:11px;background:#9b2320;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid #fff;box-shadow:0 6px 18px rgba(155,35,32,.4)">🏨</div>',
+      iconSize: [36, 36], iconAnchor: [18, 18]
+    });
+
+    const spotIcon = (code, color) => L.divIcon({
+      className: '',
+      html: `<div style="width:30px;height:30px;border-radius:50%;background:${color};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.2)">${code}</div>`,
+      iconSize: [30, 30], iconAnchor: [15, 15]
+    });
+
+    const hotelMarker = L.marker([hotel.lat, hotel.lng], { icon: hotelIcon() })
+      .addTo(map)
+      .bindPopup(`<strong>🏨 ${hotel.name}</strong><br><small>${hotel.address}</small>`);
+
+    const spotMarkers = [];
+    const group = L.featureGroup().addTo(map);
+    group.addLayer(hotelMarker);
+
+    flatSpots.forEach((spot, idx) => {
+      const marker = L.marker([spot.lat, spot.lng], { icon: spotIcon(spot.code, spot.color) })
+        .addTo(group)
+        .bindPopup(`
+          <div style="min-width:160px">
+            <strong style="color:${spot.color}">${spot.code}. ${spot.name}</strong><br>
+            <small style="color:#7c6f68">${spot.date}</small><br><br>
+            <span style="display:inline-block;background:#fff7e8;color:#a86d1f;border-radius:999px;padding:3px 8px;font-size:12px">📍 ${spot.km}</span>
+            <span style="display:inline-block;background:#eaf4ff;color:#1c6cc5;border-radius:999px;padding:3px 8px;font-size:12px;margin-top:5px">🚗 ${spot.drive}</span>
+            ${spot.walk ? `<span style="display:inline-block;background:#e9f8ef;color:#218653;border-radius:999px;padding:3px 8px;font-size:12px;margin-top:5px">🚶 ${spot.walk}</span>` : ''}
+          </div>
+        `);
+      spotMarkers[idx] = marker;
+      group.addLayer(marker);
+      L.polyline([[hotel.lat, hotel.lng], [spot.lat, spot.lng]], {
+        color: spot.color, weight: 2, opacity: 0.5,
+        dashArray: parseFloat(spot.km) > 20 ? '8,6' : '4,6'
+      }).addTo(group);
+    });
+
+    // ─── 行程卡片 ───
+    document.getElementById('days').innerHTML = days.map(day => `
+      <article class="day-card">
+        <div class="day-head">
+          <div class="day-badge-wrap" style="background:${day.color}">
+            <div style="font-size:18px;font-weight:900;color:#fff;line-height:1">D${day.day}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.8);letter-spacing:1px">DAY</div>
+          </div>
+          <div class="day-head-info">
+            <h3>${day.date} · ${day.theme}</h3>
+            <p>${day.spots.map(s => s.name).join(' · ')}</p>
+          </div>
+        </div>
+        <div class="spot-list">
+          ${day.spots.map(spot => `
+            <div class="spot-card" id="card-${spot.code}" onclick="focusSpot('${spot.code}')">
+              <div class="spot-title-row">
+                <div class="spot-code" style="background:${day.color}">${spot.code}</div>
+                <div class="spot-title">
+                  <h4>${spot.name}</h4>
+                  <p>${spot.desc}</p>
+                </div>
+              </div>
+              <div class="metrics">
+                <span class="metric km">📍 ${spot.km}</span>
+                <span class="metric drive">🚗 ${spot.drive}</span>
+                ${spot.walk ? `<span class="metric walk">🚶 ${spot.walk}</span>` : ''}
+              </div>
+            </div>
+          `).join('')}
+          <div class="smart-note">💡 ${day.note}</div>
+        </div>
+      </article>
+    `).join('');
+
+    // ─── 交互函数 ───
+    function clearActive() {
+      document.querySelectorAll('.spot-card').forEach(el => el.classList.remove('active'));
+    }
+
+    window.focusSpot = function(code) {
+      const idx = flatSpots.findIndex(s => s.code === code);
+      if (idx === -1) return;
+      clearActive();
+      document.getElementById(`card-${code}`)?.classList.add('active');
+      const spot = flatSpots[idx];
+      document.getElementById('map-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => {
+        map.flyTo([spot.lat, spot.lng], 13, { duration: 0.7 });
+        setTimeout(() => spotMarkers[idx].openPopup(), 300);
+      }, 300);
+    };
+
+    window.focusHotel = function() {
+      clearActive();
+      map.flyTo([hotel.lat, hotel.lng], 14, { duration: 0.6 });
+      setTimeout(() => hotelMarker.openPopup(), 280);
+    };
+
+    window.showAll = function() {
+      clearActive();
+      map.fitBounds(group.getBounds(), { padding: [28, 28] });
+    };
+
+    window.scrollToMap = function() {
+      document.getElementById('map-section').scrollIntoView({ behavior: 'smooth' });
+    };
+    window.scrollToItinerary = function() {
+      document.getElementById('itinerary-section').scrollIntoView({ behavior: 'smooth' });
+    };
+    window.scrollToCover = function() {
+      document.getElementById('cover').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const toast = document.getElementById('toast');
+    let toastTimer = null;
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    window.copyPageUrl = async function() {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast('✅ 链接已复制，去微信粘贴发送吧！');
+      } catch (e) {
+        showToast('请手动复制地址栏链接');
+      }
+    };
+
+    showAll();
+  </script>
+</body>
+</html>
